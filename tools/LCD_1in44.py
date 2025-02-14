@@ -25,8 +25,7 @@
  # THE SOFTWARE.
  #
 
-import tools.LCD_Config as LCD_Config
-import RPi.GPIO as GPIO
+import tools.config as config
 import time
 import numpy as np
 
@@ -58,37 +57,37 @@ D2U_R2L = 8
 SCAN_DIR_DFT = U2D_R2L
 
 
-class LCD:
-	def __init__(self):
-		self.width = LCD_WIDTH
-		self.height = LCD_HEIGHT
-		self.LCD_Scan_Dir = SCAN_DIR_DFT
-		self.LCD_X_Adjust = LCD_X
-		self.LCD_Y_Adjust = LCD_Y
+class LCD(config.RaspberryPi):
+
+	width = LCD_WIDTH
+	height = LCD_HEIGHT
+	LCD_Scan_Dir = SCAN_DIR_DFT
+	LCD_X_Adjust = LCD_X
+	LCD_Y_Adjust = LCD_Y
 
 	"""    Hardware reset     """
 	def  LCD_Reset(self):
-		GPIO.output(LCD_Config.LCD_RST_PIN, GPIO.HIGH)
-		LCD_Config.Driver_Delay_ms(100)
-		GPIO.output(LCD_Config.LCD_RST_PIN, GPIO.LOW)
-		LCD_Config.Driver_Delay_ms(100)
-		GPIO.output(LCD_Config.LCD_RST_PIN, GPIO.HIGH)
-		LCD_Config.Driver_Delay_ms(100)
+		self.digital_write(self.GPIO_RST_PIN,True)
+		time.sleep(0.01)
+		self.digital_write(self.GPIO_RST_PIN,False)
+		time.sleep(0.01)
+		self.digital_write(self.GPIO_RST_PIN,True)
+		time.sleep(0.01)
 
 	"""    Write register address and data     """
 	def  LCD_WriteReg(self, Reg):
-		GPIO.output(LCD_Config.LCD_DC_PIN, GPIO.LOW)
-		LCD_Config.SPI_Write_Byte([Reg])
+		self.digital_write(self.GPIO_DC_PIN, False)
+		self.spi_writebyte([Reg])
 
 	def LCD_WriteData_8bit(self, Data):
-		GPIO.output(LCD_Config.LCD_DC_PIN, GPIO.HIGH)
-		LCD_Config.SPI_Write_Byte([Data])
+		self.digital_write(self.GPIO_DC_PIN, True)
+		self.spi_writebyte([Data])
 
 	def LCD_WriteData_NLen16Bit(self, Data, DataLen):
-		GPIO.output(LCD_Config.LCD_DC_PIN, GPIO.HIGH)
+		self.digital_write(self.GPIO_DC_PIN, True)
 		for i in range(0, DataLen):
-			LCD_Config.SPI_Write_Byte([Data >> 8])
-			LCD_Config.SPI_Write_Byte([Data & 0xff])
+			self.spi_writebyte([Data >> 8])
+			self.spi_writebyte([Data & 0xff])
 		
 	"""    Common register initialization    """
 	def LCD_InitReg(self):
@@ -240,11 +239,11 @@ class LCD:
 	#			initialization
 	#********************************************************************************/
 	def LCD_Init(self, Lcd_ScanDir):
-		if (LCD_Config.GPIO_Init() != 0):
+		if (self.module_init() != 0):
 			return -1
 		
 		#Turn on the backlight
-		GPIO.output(LCD_Config.LCD_BL_PIN,GPIO.HIGH)
+		self.bl_DutyCycle(100)
 		
 		#Hardware reset
 		self.LCD_Reset()
@@ -254,11 +253,11 @@ class LCD:
 		
 		#Set the display scan and color transfer modes	
 		self.LCD_SetGramScanWay(Lcd_ScanDir)
-		LCD_Config.Driver_Delay_ms(200)
+		self.delay_ms(200)
 		
 		#sleep out
 		self.LCD_WriteReg(0x11)
-		LCD_Config.Driver_Delay_ms(120)
+		self.delay_ms(120)
 		
 		#Turn on the LCD display
 		self.LCD_WriteReg(0x29)
@@ -292,9 +291,9 @@ class LCD:
 		#hello
 		_buffer = [0xff]*(self.width * self.height * 2)
 		self.LCD_SetWindows(0, 0, self.width, self.height)
-		GPIO.output(LCD_Config.LCD_DC_PIN, GPIO.HIGH)
+		self.digital_write(self.GPIO_DC_PIN, True)
 		for i in range(0,len(_buffer),4096):
-			LCD_Config.SPI_Write_Byte(_buffer[i:i+4096])
+			self.spi_writebyte(_buffer[i:i+4096])
 
 	def LCD_ShowImage(self,Image,Xstart,Ystart):
 		if (Image == None):
@@ -309,6 +308,6 @@ class LCD:
 		pix[...,[1]] = np.add(np.bitwise_and(np.left_shift(img[...,[1]],3),0xE0),np.right_shift(img[...,[2]],3))
 		pix = pix.flatten().tolist()
 		self.LCD_SetWindows(0, 0, self.width , self.height)
-		GPIO.output(LCD_Config.LCD_DC_PIN, GPIO.HIGH)
+		self.digital_write(self.GPIO_DC_PIN, True)
 		for i in range(0,len(pix),4096):
-			LCD_Config.SPI_Write_Byte(pix[i:i+4096])
+			self.spi_writebyte(pix[i:i+4096])
