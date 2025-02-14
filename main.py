@@ -1,4 +1,5 @@
 import tools.LCD_1in44 as screen
+import tools.LCD_Config
 import RPi.GPIO as GPIO
 import time
 from PIL import Image,ImageDraw,ImageFont,ImageColor
