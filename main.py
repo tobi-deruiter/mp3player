@@ -13,8 +13,8 @@ KEY_2   = 20
 KEY_3   = 16
 
 #init GPIO
-GPIO.setmode(GPIO.BCM)
 GPIO.cleanup()
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(KEY_U, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(KEY_D, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(KEY_L, GPIO.IN, pull_up_down=GPIO.PUD_UP)
