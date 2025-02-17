@@ -4,6 +4,9 @@ import select
 import sys
 import os
 
+"""
+Class to control bluetooth connections on the raspberry pi.
+"""
 class BTCTRL:
     # commands used for execute and execute_and_read
     POWER_ON = "bluetoothctl power on"
@@ -13,7 +16,10 @@ class BTCTRL:
     DEVICES = "bluetoothctl devices"
     PAIR = "bluetoothctl pair %s"
     TRUST = "bluetoothctl trust %s"
+    UNTRUST = "bluetoothctl untrust %s"
     CONNECT = "bluetoothctl connect %s"
+    DISCONNECT = "bluetoothctl disconnect %s"
+    REMOVE = "bluetoothctl remove %s"
 
     # process names used for __procs
     P_SCAN = "scan"
@@ -109,6 +115,11 @@ class BTCTRL:
 
             if self.get_input() == "stop":
                 break
+
+    def stop_scan(self):
+        if self.__procs[BTCTRL.P_SCAN].poll() is None:
+            self.__procs[BTCTRL.P_SCAN].kill()
+            print("Scanning stopped")
                 
     """
     Create .asoundrc file in home directory. This will allow for audio to be played through
@@ -137,9 +148,31 @@ class BTCTRL:
         if self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust failed.")     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
         if self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect Failed")  # connect to device
+        self.stop_scan()                # stop scanning for devices
+
+    """
+    Bluetooth disconnect from given device number.
+
+    args:
+        d_num: integer corresponding to index in self.devices
+    """
+    def disconnect(self, d_num:int):
+        MAC_address = self.devices[d_num][0]
+        if self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address): print("Disconnect failed.")    # disconnect from device
+
+    """
+    Forget bluetooth connection to given device number.
+
+    args:
+        d_num: integer corresponding to index in self.devices
+    """
+    def forget(self, d_num:int):
+        MAC_address = self.devices[d_num][0]
+        if self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address): print("Untrust failed.")    # untrust device
+        if self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address): print("Remove failed.")    # remove device
 
 
-if __name__ == "__main__":
+def main():
     btctl = BTCTRL()
 
     while (True):
@@ -173,3 +206,6 @@ if __name__ == "__main__":
             case "q":
                 # TODO: cleanup subprocesses
                 exit()
+
+# if __name__ == "__main__":
+#     main()
