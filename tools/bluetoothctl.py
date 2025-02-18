@@ -79,7 +79,7 @@ class BTCTRL:
         cmd: command to be executed
     """
     def execute(self, proc:str, cmd:str):
-        self.__procs[proc] = sp.Popen(cmd.split(" "), stdout=sp.PIPE, universal_newlines=True)
+        self.__procs[proc] = sp.Popen(cmd.split(" "), stdout=sp.PIPE)
         self.__procs[proc].stdout.close()
         return self.__procs[proc].wait()
 
@@ -117,7 +117,7 @@ class BTCTRL:
                 break
 
     def stop_scan(self):
-        if self.__procs[BTCTRL.P_SCAN].poll() is None:
+        if self.__procs[BTCTRL.P_SCAN] is not None and self.__procs[BTCTRL.P_SCAN].poll() is None:
             self.__procs[BTCTRL.P_SCAN].kill()
             print("Scanning stopped")
                 
@@ -132,8 +132,8 @@ class BTCTRL:
         MAC_Address = self.devices[d_num][0]
         device_name = self.devices[d_num][1]
         pcm_name = device_name.lower().replace(" ", "")
-        home_dir = os.getenv("HOME_DIR")
-        with open(f"{home_dir}/.asoundrc", "w") as asoundrc:
+        asoundrc_dir = os.getenv("ASOUNDRC_DIR")
+        with open(f"{asoundrc_dir}", "w") as asoundrc:
             asoundrc.write(BTCTRL.asoundrc_template % (pcm_name, MAC_Address, device_name, pcm_name))
     
     """
@@ -144,10 +144,10 @@ class BTCTRL:
     """
     def connect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
-        if self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address): print("Pair failed.")       # pair to device
-        if self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust failed.")     # trust device for automatic reconnection
+        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address): print("Pair result:", ret_code)       # pair to device
+        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust result:", ret_code)     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
-        if self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect Failed")  # connect to device
+        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect result:", ret_code)  # connect to device
         self.stop_scan()                # stop scanning for devices
 
     """
@@ -188,14 +188,12 @@ def main():
                 print("Type 'stop' and enter to stop printing")
                 btctl.scan()
             case "2":
-                print("devices")
                 if len(btctl.devices) < 1:
                     print("No available devices")
                 else:
                     for d_num, device_info in btctl.devices.items():
                         print(d_num, ":", device_info[0], device_info[1])
             case "3":
-                print("connect")
                 if len(btctl.devices) < 1:
                     print("No available devices")
                 else:
@@ -207,5 +205,5 @@ def main():
                 # TODO: cleanup subprocesses
                 exit()
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
