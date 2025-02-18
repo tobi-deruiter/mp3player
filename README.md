@@ -30,7 +30,7 @@ These instructions will cover how to configure your Raspberry Pi Zero W for the 
 
 The first thing you will need to do is flash an SD card with the Raspberry Pi Os Lite (32-bit) using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 
-Make sure to choose the correct device (Raspberry Pi Zero W) by selecting "CHOOSE DEVICE" then scrolling down to Raspberry Pi Zero
+Make sure to choose the correct device (Raspberry Pi Zero W) by selecting "CHOOSE DEVICE" then scrolling down to Raspberry Pi Zero.
 ![RPi Imager: Choosing Raspberry Pi Zero](readme_assets/rpi_device.png)
 
 Then choose the Raspberry Pi OS Lite (32-bit) by selecting "CHOOSE OS", "Raspberry Pi OS (other)", then scrolling down to Raspberry Pi OS Lite (32-bit).
@@ -41,7 +41,8 @@ Then choose your SD card by selecting "CHOOSE STORAGE".
 After choosing the device, OS, and storage, click "NEXT" and choose to edit settings. It will open a new window to configure your Raspberry Pi's settings so it can have its own hostname, username and password, and connect to your wifi.
 > [!IMPORTANT]  
 > REMEMBER THE HOSTNAME, USERNAME, AND PASSWORD YOU SET. These will be used later.
-> Make sure to set the Wireless LAN country to your country.  
+> 
+>Make sure to set the Wireless LAN country to your country.  
 
 ![RPi Imager: Configuring general settings](readme_assets/rpi_os_edit_general.png)
 
@@ -175,7 +176,7 @@ Make a VLC unit file:
 ```
 sudo nano /lib/systemd/system/vlc.service
 ```
-Add the following code:
+Add the following:
 ```
 [Unit]
 Description=VLC Service
@@ -201,7 +202,7 @@ Make an EnvironmentFile with:
 ```
 sudo nano /etc/.vlcserviceconf
 ```
-And add the following code:
+And add the following:
 ```
 CLI=--cli-host
 HOSTADDR=localhost:24680
