@@ -31,9 +31,11 @@ These instructions will cover how to configure your Raspberry Pi Zero W for the 
 The first thing you will need to do is flash an SD card with the Raspberry Pi Os Lite (32-bit) using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 
 Make sure to choose the correct device (Raspberry Pi Zero W) by selecting "CHOOSE DEVICE" then scrolling down to Raspberry Pi Zero.
+
 ![RPi Imager: Choosing Raspberry Pi Zero](readme_assets/rpi_device.png)
 
 Then choose the Raspberry Pi OS Lite (32-bit) by selecting "CHOOSE OS", "Raspberry Pi OS (other)", then scrolling down to Raspberry Pi OS Lite (32-bit).
+
 ![RPi Imager: Choosing Raspberry Pi OS Lite (32-bit)](readme_assets/rpi_os.png)
 
 Then choose your SD card by selecting "CHOOSE STORAGE".
