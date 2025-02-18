@@ -42,8 +42,7 @@ Then choose your SD card by selecting "CHOOSE STORAGE".
 
 After choosing the device, OS, and storage, click "NEXT" and choose to edit settings. It will open a new window to configure your Raspberry Pi's settings so it can have its own hostname, username and password, and connect to your wifi.
 > [!IMPORTANT]  
-> REMEMBER THE HOSTNAME, USERNAME, AND PASSWORD YOU SET. These will be used later.
-> 
+> REMEMBER THE HOSTNAME, USERNAME, AND PASSWORD YOU SET. These will be used later.  
 >Make sure to set the Wireless LAN country to your country.  
 
 ![RPi Imager: Configuring general settings](readme_assets/rpi_os_edit_general.png)
@@ -244,4 +243,32 @@ cd
 sudo apt install git
 git clone https://github.com/tobi-deruiter/mp3player.git
 ```
+#### Setup the environment variables
+Add a .env file to the root of the repository:
+```
+cd mp3player
+sudo nano .env
+```
+Add the following lines:
+```
+ASOUNDRC_DIR=/home/[your_username]/.asoundrc
+SONG_DIR=/path/to/your/music
+```
+> [!IMPORTANT]  
+> Replace [your_username] with your username  
+> Replace /path/to/your/music/ with your path (probably something like /home/[your_username]/Music)
 
+### Add Music to your Raspberry Pi
+
+After downloading your music to your computer (from iTunes, ripping from your CDs, etc.) make sure your music is in the following file format:
+
+/path/to/your/music/[artist_name]/[album_name]/[song_name].mp3  
+(it can be any audio file that VLC can run, not just .mp3)
+
+Then you can do a secure copy of your files to the mp3 player by opening a terminal and using this command:
+```
+scp -r /path/to/your/music [your_hostname]:/path/to/rpi/music
+```
+> [!IMPORTANT]  
+> Replace [your_hostname] with your hostname you used when confifuring your RPi  
+> Replace /path/to/rpi/music/ with the path you set in the .env file
