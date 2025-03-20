@@ -25,12 +25,18 @@ class VLC_CTL:
     def execute(self, cmd:str):
         self.socket.send(cmd.encode())
 
-    def receive(self):
-        r, _, _ = select.select([self.socket], [], [])
-        if r:
-            return self.socket.recv(1024).decode()
-        else:
-            return None
+    def receive(self, stop_point:bytes=b'/r/n'):
+        buffer = b''
+        while stop_point not in buffer:
+            r, _, _ = select.select([self.socket], [], [])
+            if r:
+                data = self.socket.recv(1024)
+                if not data:
+                    return None
+                buffer += data
+        line, _, buffer = buffer.partition(stop_point)
+        return line.decode()
+
 
     def get_songs(self):
         song_dir = os.getenv("SONG_DIR")
@@ -73,7 +79,7 @@ class VLC_CTL:
 
     def get_queue(self):
         self.execute(f"playlist")
-        return self.receive()
+        return self.receive(stop_point=b'Media Library')
         
     def display_options_menu(self):
         print("---Options---")
