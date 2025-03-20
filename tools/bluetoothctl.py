@@ -158,7 +158,7 @@ class BTCTRL:
         self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address)     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
         self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address)   # connect to device
-        for device in self.get_connected_devices():
+        for _, device in self.get_connected_devices().items():
             if device == self.devices[d_num]:
                 self.stop_scan()        # stop scanning for devices
                 print("Connected")
@@ -226,7 +226,7 @@ class BTCTRL:
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address)    # untrust device
         self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address)    # remove device
-        for device in self.get_trusted_devices():
+        for _, device in self.get_trusted_devices().items():
             if device == self.devices[d_num]:
                 print("Failed to Forget")
                 return False
