@@ -202,6 +202,7 @@ class BTCTRL:
         d_num: integer corresponding to index in self.devices
     """
     def disconnect(self, d_num:int):
+        print(d_num, self.devices[d_num])
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
         while (self.__procs[BTCTRL.P_CONN] is not None and self.__procs[BTCTRL.P_CONN].poll() is None): pass # wait for prev process to finish
