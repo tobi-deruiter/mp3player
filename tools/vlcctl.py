@@ -25,7 +25,7 @@ class VLC_CTL:
     def execute(self, cmd:str):
         self.socket.send(cmd.encode())
 
-    def receive(self, stop_point:bytes=b'/r/n'):
+    def receive(self, stop_point:bytes=b'>'):
         buffer = b''
         while stop_point not in buffer:
             r, _, _ = select.select([self.socket], [], [])
