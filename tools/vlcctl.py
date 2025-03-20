@@ -79,9 +79,9 @@ class VLC_CTL:
             return -1
         self.execute(f"volume {volume}\n")
 
-    def get_queue(self):
-        self.execute(f"playlist")
-        return self.receive(stop_point=b'Media Library')
+    def get_stats(self):
+        self.execute(f"stats")
+        return self.receive()
         
     def display_options_menu(self):
         print("---Options---")
