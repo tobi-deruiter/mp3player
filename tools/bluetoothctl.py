@@ -180,7 +180,7 @@ class BTCTRL:
     args:
         d_num: integer corresponding to index in self.devices
     """
-    def connect(self, d_num:int):
+    async def connect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address)      # pair to device
         self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address)     # trust device for automatic reconnection
@@ -201,13 +201,11 @@ class BTCTRL:
     args:
         d_num: integer corresponding to index in self.devices
     """
-    def disconnect(self, d_num:int):
-        print(d_num, self.devices[d_num])
+    async def disconnect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
         while (self.__procs[BTCTRL.P_CONN] is not None and self.__procs[BTCTRL.P_CONN].poll() is None): pass # wait for prev process to finish
         for _, device in self.get_connected_devices().items():
-            print("dev", device, self.devices[d_num], device == self.devices[d_num])
             if device == self.devices[d_num]:
                 print("Failed to Disconnect")
                 return False
@@ -220,7 +218,7 @@ class BTCTRL:
     args:
         d_num: integer corresponding to index in self.devices
     """
-    def forget(self, d_num:int):
+    async def forget(self, d_num:int):
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address)    # untrust device
         self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address)    # remove device
