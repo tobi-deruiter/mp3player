@@ -18,9 +18,11 @@ class VLC_CTL:
         load_dotenv()
         print("creating socket")
         self.socket = socket.socket()
+        self.songs = {}
+        self.playlist = []
+
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
         self.socket.settimeout(3.0)
-        self.songs = {}
         self.get_songs()
 
     def execute(self, cmd:str):
@@ -53,13 +55,19 @@ class VLC_CTL:
             for song in self.songs[artist]:
                 print(song)
                 self.execute(f"add {song}\n")
+                self.playlist.append(song)
                 break
 
     def play(self, song:str):
         self.execute(f"add {song}\n")
+        self.playlist.append(song)
 
     def queue(self, song:str):
         self.execute(f"enqueue {song}\n")
+        self.playlist.append(song)
+
+    def remove(self, song:str):
+        self.execute(f"delete {self.playlist.index(song)+3}")
 
     def get_length(self):
         self.execute(f"get_length\n")
@@ -92,7 +100,8 @@ class VLC_CTL:
         print("5: previous song")
         print("6: set volume")
         print("7: play song")
-        print("8: get current queue")
+        print("8: get current song stats")
+        print("9: remove song from playlist")
         print("q: quit")
 
         opt = input("choose an option: ")
@@ -124,7 +133,14 @@ class VLC_CTL:
                         i += 1
                 self.play(self.songs["Agust D"][int(input("Choose song to queue: "))])
             case "8":
-                print(self.get_queue())
+                print(self.get_stats())
+            case "9":
+                i = 0
+                for artist in self.songs:
+                    for song in self.songs[artist]:
+                        print(f"{i}: {song}")
+                        i += 1
+                self.remove(self.songs["Agust D"][int(input("Choose song to remove: "))])
             case "q":
                 # TODO: cleanup subprocesses
                 exit()
