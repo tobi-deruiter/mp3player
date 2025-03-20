@@ -59,11 +59,11 @@ class BTCTRL:
         maxsplit: integer to decide how many times the stdout_line should be split
             and is used to find the MAC address and device name
     """
-    def valid_device(self, stdout_line:str, maxsplit:int):
+    def valid_device(self, stdout_line:str, maxsplit:int, filter=True):
         info = stdout_line.split(" ", maxsplit=maxsplit)
         MAC_address = info[maxsplit-1]
         device_name = info[maxsplit].rstrip('\n')
-        if MAC_address.split(":") != device_name.split("-") and [MAC_address, device_name] not in self.devices.values():
+        if MAC_address.split(":") != device_name.split("-") and ([MAC_address, device_name] not in self.devices.values() or not filter):
             return [MAC_address, device_name]
         return None
 
@@ -172,7 +172,7 @@ class BTCTRL:
         for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
             print(stdout_line)
             print(self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
-            if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
+            if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
                 devices[len(devices)] = device
         print(devices)
         return devices
