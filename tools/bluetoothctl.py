@@ -115,7 +115,10 @@ class BTCTRL:
 
             if self.get_input() == "stop":
                 break
-
+    
+    """
+    Stop scanning for new devices
+    """
     def stop_scan(self):
         if self.__procs[BTCTRL.P_SCAN] is not None and self.__procs[BTCTRL.P_SCAN].poll() is None:
             self.__procs[BTCTRL.P_SCAN].kill()
