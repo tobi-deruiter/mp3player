@@ -87,6 +87,7 @@ class BTCTRL:
         cmd: command to be executed
     """
     def execute(self, proc:str, cmd:str):
+        while (self.__procs[proc] is not None and self.__procs[proc].poll() is None): pass # wait for prev process to finish
         self.__procs[proc] = sp.Popen(cmd.split(" "), stdout=sp.PIPE)
         self.__procs[proc].stdout.close()
         return self.__procs[proc].wait()
@@ -102,6 +103,7 @@ class BTCTRL:
         stdout_line: every line outputted from the given command, returned as they come with yield
     """
     def execute_and_read(self, proc:str, cmd:str):
+        while (self.__procs[proc] is not None and self.__procs[proc].poll() is None): pass # wait for prev process to finish
         self.__procs[proc] = sp.Popen(cmd.split(" "), stdout=sp.PIPE, universal_newlines=True)
         for stdout_line in iter(self.__procs[proc].stdout.readline, ""):
             yield stdout_line
@@ -145,33 +147,12 @@ class BTCTRL:
         asoundrc_dir = os.getenv("ASOUNDRC_DIR")
         with open(f"{asoundrc_dir}", "w") as asoundrc:
             asoundrc.write(BTCTRL.asoundrc_template % (pcm_name, MAC_Address, device_name, pcm_name))
-    
-    """
-    Bluetooth connect to given device number.
-
-    args:
-        d_num: integer corresponding to index in self.devices
-    """
-    def connect(self, d_num:int):
-        MAC_address = self.devices[d_num][0]
-        self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address)      # pair to device
-        self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address)     # trust device for automatic reconnection
-        self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
-        self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address)   # connect to device
-        for _, device in self.get_connected_devices().items():
-            if device == self.devices[d_num]:
-                self.stop_scan()        # stop scanning for devices
-                print("Connected")
-                return True
-        print("Failed to Connect")
-        return False
 
     """
     Get Connected devices
     """
     def get_connected_devices(self):
         devices = {}
-        while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
         while (True):
             for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
                 if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
@@ -185,7 +166,6 @@ class BTCTRL:
     """
     def get_trusted_devices(self):
         devices = {}
-        while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
         while (True):
             for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_TRUSTED):
                 if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
@@ -193,6 +173,27 @@ class BTCTRL:
             if (self.__procs[BTCTRL.P_DEVI] is None or self.__procs[BTCTRL.P_DEVI].poll() is not None):
                 break
         return devices
+    
+    """
+    Bluetooth connect to given device number.
+
+    args:
+        d_num: integer corresponding to index in self.devices
+    """
+    def connect(self, d_num:int):
+        MAC_address = self.devices[d_num][0]
+        self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address)      # pair to device
+        self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address)     # trust device for automatic reconnection
+        self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
+        self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address)   # connect to device
+        while (self.__procs[BTCTRL.P_CONN] is not None and self.__procs[BTCTRL.P_CONN].poll() is None): pass # wait for prev process to finish
+        for _, device in self.get_connected_devices().items():
+            if device == self.devices[d_num]:
+                self.stop_scan()        # stop scanning for devices
+                print("Connected")
+                return True
+        print("Failed to Connect")
+        return False
 
     """
     Bluetooth disconnect from given device number.
@@ -203,7 +204,9 @@ class BTCTRL:
     def disconnect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
+        while (self.__procs[BTCTRL.P_CONN] is not None and self.__procs[BTCTRL.P_CONN].poll() is None): pass # wait for prev process to finish
         for _, device in self.get_connected_devices().items():
+            print("dev", device)
             if device == self.devices[d_num]:
                 print("Failed to Disconnect")
                 return False
