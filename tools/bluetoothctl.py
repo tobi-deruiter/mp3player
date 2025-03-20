@@ -174,11 +174,7 @@ class BTCTRL:
         if self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address): print("Untrust failed.")    # untrust device
         if self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address): print("Remove failed.")    # remove device
 
-
-def main():
-    btctl = BTCTRL()
-
-    while (True):
+    def display_options_menu(self):
         print("---Options---")
         print("1: scan for devices")
         print("2: get list of devices")
@@ -189,24 +185,28 @@ def main():
         match opt:
             case "1":
                 print("Type 'stop' and enter to stop printing")
-                btctl.scan()
+                self.scan()
             case "2":
-                if len(btctl.devices) < 1:
+                if len(self.devices) < 1:
                     print("No available devices")
                 else:
-                    for d_num, device_info in btctl.devices.items():
+                    for d_num, device_info in self.devices.items():
                         print(d_num, ":", device_info[0], device_info[1])
             case "3":
-                if len(btctl.devices) < 1:
+                if len(self.devices) < 1:
                     print("No available devices")
                 else:
-                    for d_num, device_info in btctl.devices.items():
+                    for d_num, device_info in self.devices.items():
                         print(d_num, ":", device_info[0], device_info[1])
                     choice = input("choose a device to connect to: ")
-                    btctl.connect(int(choice))
+                    self.connect(int(choice))
             case "q":
                 # TODO: cleanup subprocesses
                 exit()
+    
 
 if __name__ == "__main__":
-    main()
+    btctl = BTCTRL()
+
+    while (True):
+        btctl.display_options_menu()
