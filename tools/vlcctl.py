@@ -19,6 +19,7 @@ class VLC_CTL:
         print("creating socket")
         self.socket = socket.socket()
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
+        self.socket.recv(1024)
         self.songs = {}
         self.get_songs()
 
@@ -40,16 +41,34 @@ class VLC_CTL:
                 self.execute(f"add {song}\n")
                 break
 
-    def play_song(self, song:str):
+    def play(self, song:str):
         self.execute(f"add {song}\n")
 
-    def queue_song(self, song:str):
+    def queue(self, song:str):
         self.execute(f"enqueue {song}\n")
 
     def get_length(self):
-        self.execute("get_length\n")
+        self.execute(f"get_length\n")
         return self.socket.recv(1024).decode()
     
+    def toggle_pause(self):
+        self.execute(f"pause\n")
+
+    def next(self):
+        self.execute(f"next\n")
+    
+    def previous(self):
+        self.execute(f"prev\n")
+
+    def set_volume(self, volume:int):
+        if (volume < 0 or volume > 256):
+            return -1
+        self.execute(f"volume {volume}\n")
+
+    def get_queue(self):
+        self.execute(f"playlist")
+        return self.socket.recv(1024).decode()
+        
     def display_options_menu(self):
         print("---Options---")
         print("1: queue song")
@@ -59,6 +78,7 @@ class VLC_CTL:
         print("5: previous song")
         print("6: set volume")
         print("7: play song")
+        print("8: get current queue")
         print("q: quit")
 
         opt = input("choose an option: ")
@@ -69,25 +89,28 @@ class VLC_CTL:
                     for song in self.songs[artist]:
                         print(f"{i}: {song}")
                         i += 1
-                self.queue_song(self.songs["Agust D"][int(input("Choose song to queue: "))])
+                self.queue(self.songs["Agust D"][int(input("Choose song to queue: "))])
             case "2":
-                self.execute("pause\n")
+                self.toggle_pause()
             case "3":
                 print(self.get_length())
             case "4":
-                self.execute("next\n")
+                self.next()
             case "5":
-                self.execute("prev\n")
+                self.previous()
             case "6":
                 vol = input("set volume to [0-256]: ")
-                self.execute(f"volume {vol}\n")
+                if self.set_volume(int(vol)) == -1:
+                    print("volume must be a number between 0-256")
             case "7":
                 i = 0
                 for artist in self.songs:
                     for song in self.songs[artist]:
                         print(f"{i}: {song}")
                         i += 1
-                self.play_song(self.songs["Agust D"][int(input("Choose song to queue: "))])
+                self.play(self.songs["Agust D"][int(input("Choose song to queue: "))])
+            case "8":
+                print(self.get_queue())
             case "q":
                 # TODO: cleanup subprocesses
                 exit()
