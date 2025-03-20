@@ -265,8 +265,9 @@ class BTCTRL:
                 if len(connected_devices) < 1:
                     print("No connected devices")
                 else:
-                    for d_num, device_info in connected_devices.items():
-                        print(d_num, ":", device_info[0], device_info[1])
+                    for d_num, device_info in self.devices.items():
+                        status = "Connected" if (device_info in connected_devices.values()) else "Disconnected"
+                        print(d_num, ":", device_info[0], device_info[1], status)
                     choice = input("choose a device to disconnect: ")
                     self.disconnect(int(choice))
             case "q":
