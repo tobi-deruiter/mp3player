@@ -87,8 +87,12 @@ class VLC_CTL:
             return -1
         self.execute(f"volume {volume}\n")
 
+    def get_playlist(self):
+        self.execute(f"playlist\n")
+        return self.receive()
+
     def get_stats(self):
-        self.execute(f"stats")
+        self.execute(f"stats\n")
         return self.receive()
         
     def display_options_menu(self):
@@ -102,6 +106,7 @@ class VLC_CTL:
         print("7: play song")
         print("8: get current song stats")
         print("9: remove song from playlist")
+        print("10: get playlist")
         print("q: quit")
 
         opt = input("choose an option: ")
@@ -141,6 +146,8 @@ class VLC_CTL:
                         print(f"{i}: {song}")
                         i += 1
                 self.remove(self.songs["Agust D"][int(input("Choose song to remove: "))])
+            case "10":
+                print(self.get_playlist())
             case "q":
                 # TODO: cleanup subprocesses
                 exit()
