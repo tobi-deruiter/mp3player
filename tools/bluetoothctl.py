@@ -156,14 +156,23 @@ class BTCTRL:
         if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust result:", ret_code)     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
         if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect result:", ret_code)  # connect to device
-        for stdout_line in self.execute_and_read(BTCTRL.P_CONN, BTCTRL.DEVICES_CONNECTED):
-            if self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT) == self.devices[d_num]:
+        for device in self.get_connected_devices():
+            if device == self.devices[d_num]:
                 self.stop_scan()        # stop scanning for devices
                 print("Connected")
                 return True
         print("Failed to Connect")
         return False
-                
+
+    """
+    Get Connected devices
+    """
+    def get_connected_devices(self):
+        devices = {}
+        for stdout_line in self.execute_and_read(BTCTRL.P_CONN, BTCTRL.DEVICES_CONNECTED):
+            if (device := self.valid_device(stdout_line)) != None:
+                devices[len(devices)] = device
+        return devices
 
     """
     Bluetooth disconnect from given device number.
@@ -173,7 +182,13 @@ class BTCTRL:
     """
     def disconnect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
-        if self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address): print("Disconnect failed.")    # disconnect from device
+        self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
+        for device in self.get_connected_devices():                     # confirm disconnection
+            if device == self.devices[d_num]:
+                print("Failed to Disconnect")
+                return False
+        print("Disconnected")
+        return True
 
     """
     Forget bluetooth connection to given device number.
@@ -192,6 +207,7 @@ class BTCTRL:
         print("1: scan for devices")
         print("2: get list of devices")
         print("3: connect to a device")
+        print("4: disconnected from device")
         print("q: quit")
 
         opt = input("choose an option: ")
@@ -213,6 +229,15 @@ class BTCTRL:
                         print(d_num, ":", device_info[0], device_info[1])
                     choice = input("choose a device to connect to: ")
                     self.connect(int(choice))
+            case "4":
+                connected_devices = self.get_connected_devices()
+                if len(connected_devices) < 1:
+                    print("No connected devices")
+                else:
+                    for d_num, device_info in connected_devices.items():
+                        print(d_num, ":", device_info[0], device_info[1])
+                    choice = input("choose a device to disconnect: ")
+                    self.disconnect(int(choice))
             case "q":
                 # TODO: cleanup subprocesses
                 exit()    
