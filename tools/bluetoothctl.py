@@ -15,6 +15,7 @@ class BTCTRL:
     SCAN_OFF = "bluetoothctl scan off"
     DEVICES = "bluetoothctl devices"
     DEVICES_CONNECTED = "bluetoothctl devices Connected"
+    DEVICES_TRUSTED = "bluetoothctl devices Trusted"
     PAIR = "bluetoothctl pair %s"
     TRUST = "bluetoothctl trust %s"
     UNTRUST = "bluetoothctl untrust %s"
@@ -46,9 +47,11 @@ class BTCTRL:
             "devices": None
         }
         self.devices = {}
+        self.__d_num = 0
         for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES):
             if (device_info:=self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
-                self.devices[len(self.devices)] = device_info
+                self.devices[len(self.__d_num)] = device_info
+                self.__d_num += 1
 
     """
     Check if a device is a valid one. It is considered valid if it is not already in the devices dictionary
@@ -115,7 +118,6 @@ class BTCTRL:
         for stdout_line in self.execute_and_read(BTCTRL.P_SCAN, BTCTRL.SCAN_ON):
             if "NEW" in stdout_line:
                 if (device_info:=self.valid_device(stdout_line, BTCTRL.SCAN_SPLIT)) != None:
-                    print(device_info[0], device_info[1])
                     self.devices[len(self.devices)] = device_info
 
             if self.get_input() == "stop":
@@ -152,10 +154,10 @@ class BTCTRL:
     """
     def connect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
-        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address): print("Pair result:", ret_code)       # pair to device
-        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust result:", ret_code)     # trust device for automatic reconnection
+        self.execute(BTCTRL.P_CONN, BTCTRL.PAIR % MAC_address)      # pair to device
+        self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address)     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
-        if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect result:", ret_code)  # connect to device
+        self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address)   # connect to device
         for device in self.get_connected_devices():
             if device == self.devices[d_num]:
                 self.stop_scan()        # stop scanning for devices
@@ -169,12 +171,33 @@ class BTCTRL:
     """
     def get_connected_devices(self):
         devices = {}
-        for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
-            print(stdout_line)
-            print(self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
-            if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
-                devices[len(devices)] = device
-        print(devices)
+        while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
+        while (True):
+            for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
+                print("stdout", stdout_line)
+                print("valid", self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
+                if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
+                    devices[len(devices)] = device
+            if (self.__procs[BTCTRL.P_DEVI] is None or self.__procs[BTCTRL.P_DEVI].poll() is not None):
+                break
+        print("devices", devices)
+        return devices
+
+    """
+    Get Trusted devices
+    """
+    def get_trusted_devices(self):
+        devices = {}
+        while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
+        while (True):
+            for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_TRUSTED):
+                print("stdout", stdout_line)
+                print("valid", self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
+                if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
+                    devices[len(devices)] = device
+            if (self.__procs[BTCTRL.P_DEVI] is None or self.__procs[BTCTRL.P_DEVI].poll() is not None):
+                break
+        print("devices", devices)
         return devices
 
     """
@@ -201,8 +224,15 @@ class BTCTRL:
     """
     def forget(self, d_num:int):
         MAC_address = self.devices[d_num][0]
-        if self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address): print("Untrust failed.")    # untrust device
-        if self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address): print("Remove failed.")    # remove device
+        self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address)    # untrust device
+        self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address)    # remove device
+        for device in self.get_trusted_devices():
+            if device == self.devices[d_num]:
+                print("Failed to Forget")
+                return False
+        print("Device Forgotten")
+        del self.devices[d_num]
+        return False
 
 
     def display_options_menu(self):
