@@ -174,13 +174,10 @@ class BTCTRL:
         while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
         while (True):
             for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
-                print("stdout", stdout_line)
-                print("valid", self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
                 if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
                     devices[len(devices)] = device
             if (self.__procs[BTCTRL.P_DEVI] is None or self.__procs[BTCTRL.P_DEVI].poll() is not None):
                 break
-        print("devices", devices)
         return devices
 
     """
@@ -191,13 +188,10 @@ class BTCTRL:
         while (self.__procs[BTCTRL.P_DEVI] is not None and self.__procs[BTCTRL.P_DEVI].poll() is None): pass # wait for prev process to finish
         while (True):
             for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_TRUSTED):
-                print("stdout", stdout_line)
-                print("valid", self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
                 if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT, filter=False)) != None:
                     devices[len(devices)] = device
             if (self.__procs[BTCTRL.P_DEVI] is None or self.__procs[BTCTRL.P_DEVI].poll() is not None):
                 break
-        print("devices", devices)
         return devices
 
     """
@@ -209,7 +203,7 @@ class BTCTRL:
     def disconnect(self, d_num:int):
         MAC_address = self.devices[d_num][0]
         self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
-        for device in self.get_connected_devices():                     # confirm disconnection
+        for _, device in self.get_connected_devices().items():
             if device == self.devices[d_num]:
                 print("Failed to Disconnect")
                 return False
