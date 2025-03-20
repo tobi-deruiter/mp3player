@@ -171,6 +171,7 @@ class BTCTRL:
         devices = {}
         for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
             print(stdout_line)
+            print(self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT))
             if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
                 devices[len(devices)] = device
         print(devices)
