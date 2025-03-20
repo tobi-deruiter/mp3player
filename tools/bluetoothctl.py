@@ -50,7 +50,7 @@ class BTCTRL:
         self.__d_num = 0
         for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES):
             if (device_info:=self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
-                self.devices[len(self.__d_num)] = device_info
+                self.devices[self.__d_num] = device_info
                 self.__d_num += 1
 
     """
