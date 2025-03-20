@@ -206,7 +206,7 @@ class BTCTRL:
         self.execute(BTCTRL.P_CONN, BTCTRL.DISCONNECT % MAC_address)    # disconnect from device
         while (self.__procs[BTCTRL.P_CONN] is not None and self.__procs[BTCTRL.P_CONN].poll() is None): pass # wait for prev process to finish
         for _, device in self.get_connected_devices().items():
-            print("dev", device)
+            print("dev", device, self.devices[d_num], device == self.devices[d_num])
             if device == self.devices[d_num]:
                 print("Failed to Disconnect")
                 return False
