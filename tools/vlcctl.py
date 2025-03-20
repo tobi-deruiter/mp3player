@@ -19,6 +19,7 @@ class VLC_CTL:
         print("creating socket")
         self.socket = socket.socket()
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
+        self.socket.settimeout(3.0)
         self.songs = {}
         self.get_songs()
 
@@ -31,6 +32,7 @@ class VLC_CTL:
             r, _, _ = select.select([self.socket], [], [])
             if r:
                 data = self.socket.recv(1024)
+                print(data)
                 if not data:
                     return None
                 buffer += data
