@@ -14,6 +14,7 @@ class BTCTRL:
     SCAN_ON = "bluetoothctl scan on"
     SCAN_OFF = "bluetoothctl scan off"
     DEVICES = "bluetoothctl devices"
+    DEVICES_CONNECTED = "bluetoothctl devices Connected"
     PAIR = "bluetoothctl pair %s"
     TRUST = "bluetoothctl trust %s"
     UNTRUST = "bluetoothctl untrust %s"
@@ -25,6 +26,10 @@ class BTCTRL:
     P_SCAN = "scan"
     P_CONN = "connect"
     P_DEVI = "devices"
+
+    # split settings for valid_device
+    DEVICE_SPLIT = 2
+    SCAN_SPLIT = 3
 
     # .asoundrc template
     asoundrc_template = "pcm.%s {\n\ttype plug\n\tslave.pcm {\n\t\ttype bluealsa\n\t\tdevice \"%s\"\n\t\tprofile \"a2dp\"\n\t}\n\thint {\n\t\tshow on\n\t\tdescription \"%s\"\n\t}\n}\n\npcm.!default {\n\ttype plug\n\tslave.pcm \"%s\"\n}"
@@ -42,7 +47,7 @@ class BTCTRL:
         }
         self.devices = {}
         for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES):
-            if (device_info:=self.valid_device(stdout_line, 2)) != None:
+            if (device_info:=self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
                 self.devices[len(self.devices)] = device_info
 
     """
@@ -109,7 +114,7 @@ class BTCTRL:
     def scan(self):
         for stdout_line in self.execute_and_read(BTCTRL.P_SCAN, BTCTRL.SCAN_ON):
             if "NEW" in stdout_line:
-                if (device_info:=self.valid_device(stdout_line, 3)) != None:
+                if (device_info:=self.valid_device(stdout_line, BTCTRL.SCAN_SPLIT)) != None:
                     print(device_info[0], device_info[1])
                     self.devices[len(self.devices)] = device_info
 
@@ -151,7 +156,14 @@ class BTCTRL:
         if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.TRUST % MAC_address): print("Trust result:", ret_code)     # trust device for automatic reconnection
         self.create_asoundrc(d_num)     # create .asoundrc file so audio can be played through bluetooth connection
         if ret_code := self.execute(BTCTRL.P_CONN, BTCTRL.CONNECT % MAC_address): print("Connect result:", ret_code)  # connect to device
-        self.stop_scan()                # stop scanning for devices
+        for stdout_line in self.execute_and_read(BTCTRL.P_CONN, BTCTRL.DEVICES_CONNECTED):
+            if self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT) == self.devices[d_num]:
+                self.stop_scan()        # stop scanning for devices
+                print("Connected")
+                return True
+        print("Failed to Connect")
+        return False
+                
 
     """
     Bluetooth disconnect from given device number.
@@ -173,6 +185,7 @@ class BTCTRL:
         MAC_address = self.devices[d_num][0]
         if self.execute(BTCTRL.P_CONN, BTCTRL.UNTRUST % MAC_address): print("Untrust failed.")    # untrust device
         if self.execute(BTCTRL.P_CONN, BTCTRL.REMOVE % MAC_address): print("Remove failed.")    # remove device
+
 
     def display_options_menu(self):
         print("---Options---")
@@ -202,8 +215,7 @@ class BTCTRL:
                     self.connect(int(choice))
             case "q":
                 # TODO: cleanup subprocesses
-                exit()
-    
+                exit()    
 
 if __name__ == "__main__":
     btctl = BTCTRL()
