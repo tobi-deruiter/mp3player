@@ -169,7 +169,7 @@ class BTCTRL:
     """
     def get_connected_devices(self):
         devices = {}
-        for stdout_line in self.execute_and_read(BTCTRL.P_CONN, BTCTRL.DEVICES_CONNECTED):
+        for stdout_line in self.execute_and_read(BTCTRL.P_DEVI, BTCTRL.DEVICES_CONNECTED):
             if (device := self.valid_device(stdout_line, BTCTRL.DEVICE_SPLIT)) != None:
                 devices[len(devices)] = device
         return devices
