@@ -19,12 +19,18 @@ class VLC_CTL:
         print("creating socket")
         self.socket = socket.socket()
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
-        self.socket.recv(1024)
         self.songs = {}
         self.get_songs()
 
     def execute(self, cmd:str):
         self.socket.send(cmd.encode())
+
+    def receive(self):
+        r, _, _ = select.select([self.socket], [], [])
+        if r:
+            return self.socket.recv(1024).decode()
+        else:
+            return None
 
     def get_songs(self):
         song_dir = os.getenv("SONG_DIR")
@@ -49,7 +55,7 @@ class VLC_CTL:
 
     def get_length(self):
         self.execute(f"get_length\n")
-        return self.socket.recv(1024).decode()
+        return self.receive()
     
     def toggle_pause(self):
         self.execute(f"pause\n")
@@ -67,7 +73,7 @@ class VLC_CTL:
 
     def get_queue(self):
         self.execute(f"playlist")
-        return self.socket.recv(1024).decode()
+        return self.receive()
         
     def display_options_menu(self):
         print("---Options---")
