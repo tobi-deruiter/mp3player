@@ -23,6 +23,7 @@ class VLC_CTL:
 
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
         self.socket.settimeout(3.0)
+        self.receive()
         self.get_songs()
 
     def execute(self, cmd:str):
