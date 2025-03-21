@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import subprocess as sp
 import socket
 import select
+import json
 import time
 import sys
 import os
@@ -18,83 +19,105 @@ class VLC_CTL:
         load_dotenv()
         print("creating socket")
         self.socket = socket.socket()
-        self.songs = {}
+        self.music = json.load("tools/music_info.json")
         self.playlist = []
 
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
         self.socket.settimeout(3.0)
         self.receive()
-        self.get_songs()
 
     def execute(self, cmd:str):
-        self.socket.send(cmd.encode())
+        self.socket.send(f"{cmd}\n".encode())
+        return self.receive()
 
     def receive(self, stop_point:bytes=b'>'):
         buffer = b''
-        while stop_point not in buffer:
+        while True:
             r, _, _ = select.select([self.socket], [], [])
             if r:
                 data = self.socket.recv(1024)
-                print(data)
                 if not data:
                     return None
                 buffer += data
+            if stop_point in buffer:
+                break
         line, _, buffer = buffer.partition(stop_point)
         return line.decode()
 
-
-    def get_songs(self):
-        song_dir = os.getenv("SONG_DIR")
-        for artist in os.listdir(song_dir):
-            self.songs[artist] = []
-            for song in os.listdir(f"{song_dir}/{artist}"):
-                if song.endswith(".mp3"):
-                    self.songs[artist].append(f"{song_dir}/{artist}/{song}")
-
     def play_all_songs(self):
-        for artist in self.songs:
-            for song in self.songs[artist]:
+        for artist in self.music:
+            for song in self.music[artist]:
                 print(song)
-                self.execute(f"add {song}\n")
+                self.execute(f"add {song}")
                 self.playlist.append(song)
                 break
 
     def play(self, song:str):
-        self.execute(f"add {song}\n")
+        self.execute(f"add {song}")
         self.playlist.append(song)
 
     def queue(self, song:str):
-        self.execute(f"enqueue {song}\n")
+        self.execute(f"enqueue {song}")
         self.playlist.append(song)
 
     def remove(self, song:str):
         self.execute(f"delete {self.playlist.index(song)+3}")
 
     def get_length(self):
-        self.execute(f"get_length\n")
-        return self.receive()
+        return self.execute(f"get_length")
     
     def toggle_pause(self):
-        self.execute(f"pause\n")
+        self.execute(f"pause")
 
     def next(self):
-        self.execute(f"next\n")
+        self.execute(f"next")
     
     def previous(self):
-        self.execute(f"prev\n")
+        self.execute(f"prev")
 
     def set_volume(self, volume:int):
         if (volume < 0 or volume > 256):
             return -1
-        self.execute(f"volume {volume}\n")
+        self.execute(f"volume {volume}")
 
     def get_playlist(self):
-        self.execute(f"playlist\n")
-        return self.receive()
+        # playlist = []
+        # playlist_out = self.execute(f"playlist").split("\n")
+        # start_reading = False
+        # for line in playlist_out:
+        #     if start_reading:
+        #         name =  line.split(" ", maxsplit=)
+        #     if "1 - Playlist" in line:
+        return self.execute(f"playlist")
+        
 
     def get_stats(self):
-        self.execute(f"stats\n")
-        return self.receive()
+        return self.execute(f"stats")
+    
+    def get_info(self, playlist_id:int=-1):
+        return self.execute(cmd = f"info" if playlist_id == -1 else f"info {playlist_id}")
+    
+    def clear_playlist(self):
+        self.execute(f"clear")
+
+    def goto_song(self, playlist_id:int):
+        self.execute(f"goto {playlist_id}")
+
+    def choose_song(self):
+        i = 0
+        for artist in self.music:
+            print(f"{artist}")
+        artist_choice = input("Choose an artist: ")
+        for album in self.music[artist_choice]:
+            print(f"{album}")
+        album_choice = input("Choose an album: ")
+        for song in self.music[artist_choice][album_choice]:
+            print(f"{i}: {song.title}")
+            i += 1
+        song_choice = self.music[artist_choice][album_choice][int(input("Choose a song: "))].PATH
+        print(song_choice)
+        return song_choice
+
         
     def display_options_menu(self):
         print("---Options---")
@@ -113,12 +136,7 @@ class VLC_CTL:
         opt = input("choose an option: ")
         match opt:
             case "1":
-                i = 0
-                for artist in self.songs:
-                    for song in self.songs[artist]:
-                        print(f"{i}: {song}")
-                        i += 1
-                self.queue(self.songs["Agust D"][int(input("Choose song to queue: "))])
+                self.queue(self.choose_song())
             case "2":
                 self.toggle_pause()
             case "3":
@@ -132,21 +150,11 @@ class VLC_CTL:
                 if self.set_volume(int(vol)) == -1:
                     print("volume must be a number between 0-256")
             case "7":
-                i = 0
-                for artist in self.songs:
-                    for song in self.songs[artist]:
-                        print(f"{i}: {song}")
-                        i += 1
-                self.play(self.songs["Agust D"][int(input("Choose song to queue: "))])
+                self.play(self.choose_song())
             case "8":
                 print(self.get_stats())
             case "9":
-                i = 0
-                for artist in self.songs:
-                    for song in self.songs[artist]:
-                        print(f"{i}: {song}")
-                        i += 1
-                self.remove(self.songs["Agust D"][int(input("Choose song to remove: "))])
+                self.remove(self.choose_song())
             case "10":
                 print(self.get_playlist())
             case "q":
