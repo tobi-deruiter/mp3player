@@ -48,12 +48,9 @@ class MusicInfoGenerator:
                     self.music_info[artist][album].append(song_info)
                     self.music_info[artist][album].sort(key=(lambda x: x["track"]+(100*x["disc"])))
 
-        with open("music_info1.json", 'w') as mi_json:
+        with open("music_info.json", 'w') as mi_json:
             json.dump(self.music_info, mi_json, indent=4)
 
 if __name__ == "__main__":
     mi_gen = MusicInfoGenerator()
     mi_gen.generate()
-    with open('music_info.json', 'r') as f:
-        mi = json.load(f)
-        print("Same" if mi_gen.music_info == mi else "Different")
