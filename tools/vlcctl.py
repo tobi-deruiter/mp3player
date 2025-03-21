@@ -19,12 +19,15 @@ class VLC_CTL:
         load_dotenv()
         print("creating socket")
         self.socket = socket.socket()
-        self.music = json.load("tools/music_info.json")
+        self.music = {}
         self.playlist = []
 
         self.socket.connect((VLC_CTL.ADDRESS, VLC_CTL.PORT))
         self.socket.settimeout(3.0)
         self.receive()
+
+        with open("tools/music_info.json", 'r') as mi_json:
+            self.music = json.load(mi_json)
 
     def execute(self, cmd:str):
         self.socket.send(f"{cmd}\n".encode())
