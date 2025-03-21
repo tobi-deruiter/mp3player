@@ -115,11 +115,13 @@ class VLC_CTL:
             print(f"{album}")
         album_choice = input("Choose an album: ")
         for song in self.music[artist_choice][album_choice]:
-            print(f"{i}: {song}")
+            title = song["title"]
+            print(f"{i}: {title}")
             i += 1
         song_choice = self.music[artist_choice][album_choice][int(input("Choose a song: "))]["PATH"]
-        print(song_choice)
-        return song_choice
+        music_dir = os.getenv("MUSIC_DIR")
+        print(music_dir + song_choice)
+        return music_dir + song_choice
 
         
     def display_options_menu(self):
