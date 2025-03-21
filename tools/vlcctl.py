@@ -115,9 +115,9 @@ class VLC_CTL:
             print(f"{album}")
         album_choice = input("Choose an album: ")
         for song in self.music[artist_choice][album_choice]:
-            print(f"{i}: {song.title}")
+            print(f"{i}: {song["title"]}")
             i += 1
-        song_choice = self.music[artist_choice][album_choice][int(input("Choose a song: "))].PATH
+        song_choice = self.music[artist_choice][album_choice][int(input("Choose a song: "))]["PATH"]
         print(song_choice)
         return song_choice
 
